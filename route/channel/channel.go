@@ -2,9 +2,9 @@ package channel
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"zroute.io/model"
 	"zroute.io/route/rtu"
 	"zroute.io/route/transport"
@@ -31,11 +31,11 @@ func New(ctx context.Context) *Channel {
 func (c *Channel) Start() (err error) {
 	err = c.transport.Open()
 	if err != nil {
-		fmt.Println("Open trans failed")
+		log.Error("Open trans failed")
 		return
 	}
 	for _, r := range c.RtuList {
-		c.Rtus[c.ID] = rtu.New(&r)
+		c.Rtus[c.ID] = rtu.New(&r, c.sendc)
 	}
 	defer func(rtus map[uint]*rtu.Rtu) {
 		for _, rtu := range rtus {
@@ -46,18 +46,18 @@ func (c *Channel) Start() (err error) {
 		for {
 			select {
 			case <-c.Ctx.Done():
-				fmt.Println("channel routine was exit")
+				log.Info("channel routine was exit")
 				return
 			case data, ok := <-c.sendc:
 				if !ok {
-					fmt.Println("channel has been closed")
+					log.Info("channel has been closed")
 				}
 				n, err := c.transport.Write(data)
 				if err != nil {
-					fmt.Println("send error")
+					log.Error("send error")
 					continue
 				}
-				fmt.Printf("send %d byte data", n)
+				log.Debugf("send %d byte data", n)
 			default:
 				for _, rtu := range c.Rtus {
 					rtu.OnScan()
@@ -73,7 +73,7 @@ func (c *Channel) Start() (err error) {
 func (c *Channel) Close() (err error) {
 	err = c.transport.Close()
 	if err != nil {
-		fmt.Println("Open trans failed")
+		log.Error("Close trans failed")
 		return
 	}
 	return

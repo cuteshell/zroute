@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "core/mmdbpb";
+
+service MemDB {
+    rpc GetRecords(TableName) returns (Records) {};
+}
+
+message TableName {
+    string name = 1;
+}
+
+message Record {
+    string id = 1;
+    bytes data = 2;
+}
+
+message Records {
+    repeated Record records = 1;
+}
+
+
+

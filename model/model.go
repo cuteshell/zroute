@@ -81,6 +81,7 @@ func New() *Model {
 		log.Error("failed to connect database. err:", err)
 		return nil
 	}
+	defer db.Close()
 	db.SingularTable(true)
 	m.DB = db
 	err = m.AutoMigrate(&Link{}, &Channel{}, &Pnt{}, &Parameter{}, &Rtu{}, &RouteTable{}).Error
