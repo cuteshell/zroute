@@ -30,8 +30,11 @@ func main() {
 		mmdb.MMDB.CreateMemTable(table, columns)
 
 		//add data to table
-		var records []mmdb.MemDBRecord
-		db.Table(table.Name).Scan(records)
+		records, err := ReadTable(db, table.Name)
+		if err != nil {
+			log.Error("database error:", err)
+			continue
+		}
 		log.Debug("table records:", records)
 		mmdb.MMDB.AddRecords(table.Name, records)
 	}
@@ -46,4 +49,32 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+func ReadTable(db *gorm.DB, name string) (records []mmdb.MemDBRecord, err error) {
+	rows, err := db.DB().Query("select * from " + name)
+	if err != nil {
+		return
+	}
+	cols, err := rows.Columns()
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		columns := make([]interface{}, len(cols))
+		columnPointers := make([]interface{}, len(cols))
+		for i, _ := range columns {
+			columnPointers[i] = &columns[i]
+		}
+		if err = rows.Scan(columnPointers...); err != nil {
+			return
+		}
+		record := make(mmdb.MemDBRecord)
+		for i, colName := range cols {
+			val := columnPointers[i].(*interface{})
+			record[colName] = *val
+		}
+		records = append(records, record)
+	}
+	return
 }

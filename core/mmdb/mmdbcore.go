@@ -1,6 +1,7 @@
 package mmdb
 
 import (
+	"fmt"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	log "github.com/sirupsen/logrus"
 	"zroute.io/model/core"
@@ -28,21 +29,18 @@ func (m MemDB) CreateMemTable(table core.MemTable, columns []core.MemColumn) {
 
 func (m MemDB) AddRecords(tableName string, records []MemDBRecord) {
 	for _, record := range records {
-		if value, ok := record["ID"]; ok {
-			if id, ok := value.(string); ok {
-				m[tableName].Data[id] = record
-				continue
-			}
-			log.Warn("record ID type is not string. record:", record)
+		if value, ok := record["id"]; ok {
+			id := fmt.Sprintf("%s", value)
+			m[tableName].Data[id] = record
 			continue
 		}
-		log.Warn("reocord ID field was not found. record:", record)
+		log.Warn("reocord id field was not found. record:", record)
 	}
 }
 
 func (m MemDB) DelRecords(tableName string, records []MemDBRecord) {
 	for _, record := range records {
-		if value, ok := record["ID"]; ok {
+		if value, ok := record["id"]; ok {
 			if id, ok := value.(string); ok {
 				delete(m[tableName].Data, id)
 				break
