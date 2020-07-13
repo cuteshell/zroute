@@ -3,3 +3,8 @@ proto:
 
 mmdb:
 	go build -mod=vendor -o build/bin/mmdb cmd/core/mmdb/mmdb.go
+
+zroutec:
+	go build -mod=vendor -o build/bin/zroutec cmd/zroutec/zroutec.go
+
+all: mmdb zroutec
