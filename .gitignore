@@ -5,6 +5,12 @@
 *.so
 *.dylib
 
+# build result
+build/bin/
+
+# vim files
+**/*.swp
+
 # Test binary, built with `go test -c`
 *.test
 
