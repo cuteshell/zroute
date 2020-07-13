@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	pb "zroute.io/common/proto/gen/core/mmdbpb"
 	"zroute.io/model/core"
+	_ "zroute.io/utils/log"
 )
 
 func main() {

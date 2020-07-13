@@ -5,14 +5,16 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"zroute.io/model"
 	"zroute.io/route/rtu"
 	"zroute.io/route/transport"
+	_ "zroute.io/utils/log"
 )
 
 // Channel contains rtu
 type Channel struct {
-	model.Channel
+	ID        string
+	Name      string
+	Address   string
 	Ctx       context.Context
 	transport transport.Transport
 	Rtus      map[uint]*rtu.Rtu // key is rtu_id
@@ -34,8 +36,8 @@ func (c *Channel) Start() (err error) {
 		log.Error("Open trans failed")
 		return
 	}
-	for _, r := range c.RtuList {
-		c.Rtus[c.ID] = rtu.New(&r, c.sendc)
+	for id, r := range c.Rtus {
+		c.Rtus[id] = rtu.New(r, c.sendc)
 	}
 	defer func(rtus map[uint]*rtu.Rtu) {
 		for _, rtu := range rtus {

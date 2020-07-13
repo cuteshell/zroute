@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MemDBClient interface {
 	GetRecords(ctx context.Context, in *TableName, opts ...grpc.CallOption) (*Records, error)
+	GetRecordsByField(ctx context.Context, in *RequestCondition, opts ...grpc.CallOption) (*Records, error)
 }
 
 type memDBClient struct {
@@ -37,11 +38,21 @@ func (c *memDBClient) GetRecords(ctx context.Context, in *TableName, opts ...grp
 	return out, nil
 }
 
+func (c *memDBClient) GetRecordsByField(ctx context.Context, in *RequestCondition, opts ...grpc.CallOption) (*Records, error) {
+	out := new(Records)
+	err := c.cc.Invoke(ctx, "/MemDB/GetRecordsByField", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MemDBServer is the server API for MemDB service.
 // All implementations must embed UnimplementedMemDBServer
 // for forward compatibility
 type MemDBServer interface {
 	GetRecords(context.Context, *TableName) (*Records, error)
+	GetRecordsByField(context.Context, *RequestCondition) (*Records, error)
 	mustEmbedUnimplementedMemDBServer()
 }
 
@@ -51,6 +62,9 @@ type UnimplementedMemDBServer struct {
 
 func (*UnimplementedMemDBServer) GetRecords(context.Context, *TableName) (*Records, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecords not implemented")
+}
+func (*UnimplementedMemDBServer) GetRecordsByField(context.Context, *RequestCondition) (*Records, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRecordsByField not implemented")
 }
 func (*UnimplementedMemDBServer) mustEmbedUnimplementedMemDBServer() {}
 
@@ -76,6 +90,24 @@ func _MemDB_GetRecords_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MemDB_GetRecordsByField_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestCondition)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MemDBServer).GetRecordsByField(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MemDB/GetRecordsByField",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MemDBServer).GetRecordsByField(ctx, req.(*RequestCondition))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _MemDB_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "MemDB",
 	HandlerType: (*MemDBServer)(nil),
@@ -83,6 +115,10 @@ var _MemDB_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRecords",
 			Handler:    _MemDB_GetRecords_Handler,
+		},
+		{
+			MethodName: "GetRecordsByField",
+			Handler:    _MemDB_GetRecordsByField_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

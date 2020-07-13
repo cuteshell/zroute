@@ -5,6 +5,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	log "github.com/sirupsen/logrus"
 	"zroute.io/model/core"
+	_ "zroute.io/utils/log"
 )
 
 type MemDBRecord map[string]interface{}
@@ -61,6 +62,17 @@ func (m MemDB) GetRecordByID(tableName string, id string) (Record MemDBRecord) {
 		return record
 	}
 	return nil
+}
+
+func (m MemDB) GetRecordsByField(tableName string, field string, value interface{}) (records []MemDBRecord){
+	for _, record := range m[tableName].Data {
+		if val, ok := record[field]; ok {
+			if val != value {
+				continue
+			}
+			records = append(records, record)
+		}
+	}
 }
 
 func (m MemDB) UpdateRecordField(tableName string, field string, id string, value interface{}) {

@@ -2,17 +2,21 @@ package route
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2/bson"
+	"zroute.io/core/mmdb"
 
 	"github.com/coreos/etcd/store"
+	pb "zroute.io/common/proto/gen/core/mmdbpb"
 	"zroute.io/model"
 	"zroute.io/route/channel"
-
 	_ "zroute.io/utils/log"
 )
 
 type Route struct {
 	ctx     context.Context
 	running bool
+	mmdb    mmdb.Client
 	store   store.Store
 	model   *model.Model
 	chans   []*channel.Channel
@@ -23,14 +27,26 @@ func New(ctx context.Context, project *Project) *Route {
 	r := &Route{}
 	r.model = model.New()
 
-	var chans []model.Channel
-	r.model.Preload("LinkList").Preload("RtuList").
-		Preload("RtuList.PntList").Preload("RtuList.Parameter").Find(&chans)
+	var err error
+	r.mmdb, err = mmdb.CreateMemDBClient()
+	if err != nil {
+		log.Fatal("create MemDBClient:", err)
+	}
+	//Get daqchannel record from mmdb
+	records, err := r.mmdb.GetRecords(r.mmdb.Ctx, &pb.TableName{Name: "daqchannel"})
+	if err != nil {
+		log.Fatal("GetRecords:", err)
+	}
 
-	for _, c := range chans {
-		channel := channel.New(ctx)
-		channel.Channel = c
-		r.chans = append(r.chans, channel)
+	for _, record := range records.GetRecords()  {
+		var rec mmdb.MemDBRecord
+		data := record.GetData()
+		if err := bson.Unmarshal(data, &rec); err != nil {
+			log.Error(err)
+			continue
+		}
+		channel := channel.Channel{Name:rec["Name"].(string),Address:rec["Address"].(string)}
+		r.chans = append(r.chans, &channel)
 	}
 	return r
 }

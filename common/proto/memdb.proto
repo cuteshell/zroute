@@ -4,6 +4,7 @@ option go_package = "core/mmdbpb";
 
 service MemDB {
     rpc GetRecords(TableName) returns (Records) {};
+    rpc GetRecordsByField(RequestCondition) returns (Records) {};
 }
 
 message TableName {
@@ -17,6 +18,12 @@ message Record {
 
 message Records {
     repeated Record records = 1;
+}
+
+message RequestCondition {
+    string table_name = 1;
+    string field_name = 2;
+    string field_value = 3;
 }
 
 

@@ -4,10 +4,9 @@ import (
 	"log"
 	"net/rpc"
 	"os/exec"
+	"zroute.io/route/pnt"
 
 	"github.com/hashicorp/go-plugin"
-	"zroute.io/model"
-	"zroute.io/route/driver/common"
 )
 
 // Driver protocol to communicate
@@ -29,7 +28,7 @@ type Driver interface {
 }
 
 type Request struct {
-	PntList []model.Pnt
+	Pnts  map[string]pnt.Pnt
 }
 
 type Response struct {
@@ -51,9 +50,9 @@ func (*DriverPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, er
 func LoadDriver(driverName string) (*plugin.Client, Driver) {
 	driverPath := "../../route/driver/module/" + driverName + ".mo"
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: common.Handshake,
+		HandshakeConfig: Handshake,
 		Plugins: map[string]plugin.Plugin{
-			driverName: &common.DriverPlugin{},
+			driverName: &DriverPlugin{},
 		},
 		Cmd: exec.Command(driverPath),
 	})
@@ -66,6 +65,6 @@ func LoadDriver(driverName string) (*plugin.Client, Driver) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	driver := raw.(common.Driver)
+	driver := raw.(Driver)
 	return client, driver
 }

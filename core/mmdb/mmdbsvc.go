@@ -2,20 +2,19 @@ package mmdb
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"gopkg.in/mgo.v2/bson"
-	log "github.com/sirupsen/logrus"
 	"time"
 	pb "zroute.io/common/proto/gen/core/mmdbpb"
+	_ "zroute.io/utils/log"
 )
 
 type Server struct {
 	pb.UnimplementedMemDBServer
 }
 
-func (s *Server) GetRecords(ctx context.Context, in *pb.TableName) (*pb.Records, error) {
-	log.Debugf("Get table:%s records", in.GetName())
-	records := MMDB.GetRecords(in.GetName())
+func convertToPBRecords(records []MemDBRecord) (*pb.Records, error) {
 	var recs []*pb.Record
 	for _, record := range records {
 		id, ok := record["ID"].(string)
@@ -29,6 +28,20 @@ func (s *Server) GetRecords(ctx context.Context, in *pb.TableName) (*pb.Records,
 		}
 	}
 	return &pb.Records{Records: recs}, nil
+}
+
+func (s *Server) GetRecords(ctx context.Context, in *pb.TableName) (*pb.Records, error) {
+	log.Debugf("Get table:%s records\n", in.GetName())
+	records := MMDB.GetRecords(in.GetName())
+
+	return convertToPBRecords(records)
+}
+
+func (s *Server) GetRecordsByField(ctx context.Context, in *pb.RequestCondition) (*pb.Records, error) {
+	log.Debugf("Get Table:%s records by %s = %v\n", in.GetTableName(), in.GetFieldName(), in.GetFieldValue())
+	records := MMDB.GetRecordsByField(in.GetTableName(), in.GetFieldName(), in.GetFieldValue())
+
+	return convertToPBRecords(records)
 }
 
 type Client struct {
