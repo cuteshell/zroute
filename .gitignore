@@ -6,7 +6,7 @@
 *.dylib
 
 # build result
-build/bin/
+!**/*.gitkeep
 
 # vim files
 **/*.swp
